@@ -104,8 +104,7 @@ class RAGSystem:
         context_results = self.collection.query(query_texts=[prompt], n_results=config.task.n_vector_results)
         texts = context_results["documents"][0]
         context = "\n".join(texts)
-        context = context[:min(3500, len(context))]
-        # context = context[:min(7500, len(context))]
+        context = context[:min(config.llm[config.task.llm].context_limit, len(context))]
 
         if config.task.eda_mode:
             context_samples = "\n---\n".join([text[:min(100, len(text))] for text in context_results["documents"][0]])

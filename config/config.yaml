@@ -19,3 +19,9 @@ paths:
         logs: ${paths.roots.output}/logs
 
     storage: ${paths.roots.project}/storage
+
+llm:
+    phi3:
+        context_limit: 3600
+    gemma:
+        context_limit: 7600
