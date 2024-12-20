@@ -1,0 +1,21 @@
+log_level: TRACE  # TRACE WARNING
+
+task:
+    eda_mode: True  # True False
+    embedding_model: nomic-embed-text
+    llm: phi3  # phi3  gemma
+
+    chunk_size: 1024  # 512
+    n_vector_results: 4
+
+paths:
+    roots:
+        ws: D:/code # /home/stud/ath/ath_ws/others  D:/code
+        project: ${paths.roots.ws}/library_rag
+        output: ${paths.roots.project}/output
+        data: ${paths.roots.project}/data
+
+    output:
+        logs: ${paths.roots.output}/logs
+
+    storage: ${paths.roots.project}/storage
