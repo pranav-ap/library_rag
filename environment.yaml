@@ -30,3 +30,4 @@ dependencies:
         - llama-index-embeddings-ollama
         - llama-index-llms-ollama
         - chromadb
+        - sentence-transformers

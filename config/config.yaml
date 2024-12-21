@@ -1,12 +1,16 @@
 log_level: TRACE  # TRACE WARNING
 
 task:
-    eda_mode: True  # True False
+    eda_mode: False  # True False
     embedding_model: nomic-embed-text
     llm: phi3  # phi3  gemma
 
-    chunk_size: 1024  # 512
-    n_vector_results: 4
+    chunk_size: 512  # 1024 512 256
+    n_vector_results: 8
+
+    rewrite_user_prompt: False # True False
+    check_relevance: False
+    rerank: True
 
 paths:
     roots:
