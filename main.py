@@ -1,6 +1,6 @@
 import os
 import re
-from typing import Optional
+from typing import List, Optional
 
 import chromadb
 import ollama
@@ -29,17 +29,26 @@ class SnippetRelevanceOutput(BaseModel):
     )
 
 
+class PromptTemplate:
+    @classmethod
+    def prepare_context(cls, snippets: List[str], empty_space: int) -> str:
+        context = ''
+
+        for i, text in enumerate(snippets):
+            context += f"Context {i+1}:\n{text}\n"
+
+        limit = min(empty_space, len(context))
+        context = context[:limit]
+
+        return context
+
+
 class RAGSystem:
     def __init__(self):
         # self.chroma_client = chromadb.PersistentClient(path=config.paths.storage)
         self.chroma_client = chromadb.EphemeralClient()
         self.collection = self._setup_collection()
-
-    @staticmethod
-    def _show_context(contexts):
-        for i, text in enumerate(contexts):
-            print(f"Context {i+1}:")
-            print(text[:min(100, len(text))])
+        self.cross_encoder = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
 
     @staticmethod
     def _get_nodes():
@@ -85,106 +94,35 @@ class RAGSystem:
         return nodes
 
     def _setup_collection(self):
-        nodes = self._get_nodes()  # nodes hold the text snippets
+        # nodes hold the text snippets
+        nodes = self._get_nodes()
 
         collection = self.chroma_client.get_or_create_collection(
             name='books',
             embedding_function=SnippetEmbeddingFunction()
         )
 
+        # noinspection SpellCheckingInspection
+        ids, documents, metadatas = [], [], []
+
         for node in nodes:
-            collection.add(
-                ids=[node.node_id],
-                documents=[node.text],
-                metadatas=[{
-                    'file_name': node.metadata['file_name'],
-                    'file_type': node.metadata['file_type'],
-                }],
-            )
+            ids.append(node.node_id)
+            documents.append(node.text)
+            metadatas.append({
+                'file_name': node.metadata.get('file_name', 'unknown'),
+                'file_type': node.metadata.get('file_type', 'unknown'),
+            })
+
+        collection.add(
+            ids=ids,
+            documents=documents,
+            metadatas=metadatas
+        )
 
         return collection
 
     @staticmethod
-    def _is_snippet_relevant(user_prompt, snippet):
-        prompt = f"""
-        You are a grader assessing relevance of a snippet to a user question.
-        - If the document contains keyword(s) or semantic meaning related to the user question, grade it as relevant.
-        - Do not be too strict. The goal is just to filter out extremely erroneous retrievals.
-        Give a binary score 'yes' or 'no' score to indicate whether the document is relevant to the question.
-        
-        Snippet: {snippet}
-        Question: {user_prompt}
-        """
-
-        response = ollama.generate(
-            model=config.task.llm,
-            prompt=prompt,
-            format=SnippetRelevanceOutput.model_json_schema(),
-        )
-
-        relevance = SnippetRelevanceOutput.model_validate_json(response.response)
-        relevance = relevance.binary_score.strip().lower()
-
-        if relevance not in ['yes', 'no']:
-            logger.debug(f'Invalid Relevance Score: {relevance}')
-
-        relevance = relevance == 'yes'
-        return relevance
-
-    @staticmethod
-    def re_rank_cross_encoders(user_prompt, snippets):
-        encoder_model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
-        ranks = encoder_model.rank(user_prompt, snippets)
-
-        reranked_snippets = []
-
-        for rank in ranks:
-            snippet = snippets[rank['corpus_id']]
-            reranked_snippets.append(snippet)
-
-        return reranked_snippets
-
-    @staticmethod
-    def _truncate_context(context):
-        limit = config.llm[config.task.llm].context_limit
-        if len(context) > limit:
-            logger.warning(f"Context truncated to {limit} characters.")
-
-        limit = min(config.llm[config.task.llm].context_limit, len(context))
-        return context[:limit]
-
-    def _get_context(self, user_prompt):
-        results = self.collection.query(
-            query_texts=[user_prompt],
-            n_results=config.task.n_vector_results
-        )
-
-        snippets = results["documents"][0]
-        logger.info(f'Number of Contexts Retrieved : {len(snippets)}')
-
-        if config.task.check_relevance:  # too binary
-            filtered_snippets = [s for s in snippets if self._is_snippet_relevant(user_prompt, s)]
-            logger.info(f'Number of Relevant Contexts : {len(filtered_snippets)}')
-
-            if len(filtered_snippets) == 0:
-                logger.warning('All contexts are deemed irrelevant. Using all contexts instead.')
-                snippets = filtered_snippets
-
-        if config.task.rerank:
-            logger.info('Re-ranking Contexts')
-            snippets = self.re_rank_cross_encoders(user_prompt, snippets)
-
-        context = "\n---\n".join(snippets)  # give proper sections
-        context = self._truncate_context(context)
-
-        if config.task.eda_mode:
-            logger.info('Contexts')
-            self._show_context(context)
-
-        return context
-
-    @staticmethod
-    def _query_llm(context, user_prompt):
+    def _query_llm(user_prompt, snippets):
         preferences = f"""
         - Answer in simple language.
         - Only use context information. Nothing else.
@@ -192,17 +130,28 @@ class RAGSystem:
         - Use lists when appropriate to break down complex information.
         """
 
-        prompt = f"""
-        Context: {context}
-        Preferences: {preferences}
-        Question: {user_prompt}
+        prompt = """Contexts: 
+        {context}
+        Preferences: 
+        {preferences}
+        Question: 
+        {user_prompt}
         Answer: 
         """
 
-        if config.task.eda_mode:
-            print(prompt)
+        empty_space = config.llm[f'{config.task.llm}'].context_window_size
+        empty_space = empty_space - len(preferences) - len(user_prompt) - len(prompt)
 
-        logger.info(f'Prompt Length : {len(prompt)}')
+        context = PromptTemplate.prepare_context(snippets, empty_space)
+        prompt = prompt.format(
+            context=context,
+            preferences=preferences,
+            user_prompt=user_prompt
+        )
+
+        if config.task.debug_mode:
+            print(prompt)
+            logger.info(f'Prompt Length : {len(prompt)}')
 
         response = ollama.generate(
             model=config.task.llm,
@@ -213,10 +162,19 @@ class RAGSystem:
 
         return response
 
+    def _re_rank_cross_encoders(self, user_prompt, snippets):
+        ranks = self.cross_encoder.rank(user_prompt, snippets)
+
+        reranked_snippets = []
+        for rank in ranks:
+            snippet = snippets[rank['corpus_id']]
+            reranked_snippets.append(snippet)
+
+        return reranked_snippets
+
     @staticmethod
     def _rewrite_query(user_prompt):
-        prompt = f"""
-        You are an AI assistant tasked with reformulating user queries to improve retrieval in a RAG system. 
+        prompt = f"""You are an AI assistant tasked with reformulating user queries to improve retrieval in a RAG system. 
         Given the original query, rewrite it to be more specific, detailed, and likely to retrieve relevant information.
         
         Original query: {user_prompt}
@@ -231,17 +189,34 @@ class RAGSystem:
 
         response = response['response']
 
+        if config.task.debug_mode:
+            logger.info('Rewritten User Prompt')
+            print(response)
+
         return response
+
+    def _get_snippets(self, user_prompt):
+        results = self.collection.query(
+            query_texts=user_prompt,
+            n_results=config.task.n_vector_results
+        )
+
+        snippets = results["documents"][0]
+        logger.info(f'Number of Snippets Retrieved : {len(snippets)}')
+
+        if config.task.rerank:
+            logger.info('Re-ranking Snippets')
+            snippets = self._re_rank_cross_encoders(user_prompt, snippets)
+
+        return snippets
 
     def query(self, user_prompt):
         if config.task.rewrite_user_prompt:
             user_prompt = self._rewrite_query(user_prompt)
-            logger.info('Rewritten User Prompt')
-            print(user_prompt)
 
-        context = self._get_context(user_prompt)
+        snippets = self._get_snippets(user_prompt)
+        response = self._query_llm(user_prompt, snippets)
 
-        response = self._query_llm(context, user_prompt)
         return response
 
 
