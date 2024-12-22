@@ -16,17 +16,32 @@ class RAGSystem:
 
     @staticmethod
     def _rewrite_query(user_prompt):
-        prompt = f"""You are an AI assistant tasked with reformulating user queries to improve retrieval in a RAG system. 
-        Given the original query, rewrite it to be more specific, detailed, and likely to retrieve relevant information.
-        
-        Original query: {user_prompt}
-        
-        Rewritten query:
+        preamble = """
+        Your are my AI assistant. 
+        Reformulate the user prompt to improve retrieval in a RAG system. 
         """
+
+        preferences = [
+            'Do not change the meaning of the user prompt.',
+            'Retain important keywords and phrases.',
+        ]
+
+        prompt_template = PromptTemplate(
+            preamble=preamble,
+            preferences=preferences,
+        )
+
+        prompt: str = prompt_template.prepare_rewrite_prompt(
+            user_prompt=user_prompt
+        )
 
         response = ollama.generate(
             model=config.task.llm,
-            prompt=prompt
+            prompt=prompt,
+            options={
+                "max_tokens": config.task.max_tokens,
+                "temperature": config.task.temperature,
+            }
         )
 
         response = response['response']
@@ -42,6 +57,8 @@ class RAGSystem:
             query_texts=user_prompt,
             n_results=config.task.n_results
         )
+
+        # Results are already Sorted
 
         results = {
             "ids": results["ids"][0],
@@ -63,6 +80,8 @@ class RAGSystem:
         scores = index.get_scores(tokenized_query)
 
         n_results = config.task.n_results
+
+        # Sorting is important here. RRF assumes it.
         top_indices = sorted(
             range(len(scores)),
             key=lambda i: scores[i],
@@ -122,7 +141,7 @@ class RAGSystem:
 
         return combined_results
 
-    def _re_rank_cross_encoders(self, user_prompt, results) -> [str]:
+    def _re_rank(self, user_prompt, results) -> [str]:
         ids = results['ids']
         snippets = results['snippets']
 
@@ -146,33 +165,26 @@ class RAGSystem:
         return reranked_results
 
     @staticmethod
-    def _query_llm(user_prompt, retrieval_results):
-        preferences = f"""
-        - Answer in simple language.
-        - Only use context information. Nothing else.
-        - Answer the Question in 100 words or less.
-        - Use lists when appropriate to break down complex information.
-        """
+    def _final_query(user_prompt, retrieval_results):
+        preferences = [
+            'Answer in simple words within 100 words. Omit supplementary details.',
+            'Only use context information. Nothing else.',
+        ]
 
-        prompt = """You are an AI assistant tasked with answering user questions.
-        Use the context provided to generate a response that is relevant, concise, and informative.
-        Contexts: 
-        {context}
-        Preferences: 
-        {preferences}
-        Question: 
-        {user_prompt}
-        Answer: 
+        preamble = """
+        Your are my AI assistant. You answer the user question according to my preferences using the given context.
+        My Preferences are listed below:
         """
-
-        empty_space = config.llm[config.task.llm].context_window_size
-        empty_space = empty_space - len(preferences) - len(user_prompt) - len(prompt)
 
         snippets = retrieval_results['snippets']
-        context = PromptTemplate.prepare_context(snippets, empty_space)
-        prompt = prompt.format(
-            context=context,
+
+        prompt_template = PromptTemplate(
+            preamble=preamble,
             preferences=preferences,
+        )
+
+        prompt: str = prompt_template.prepare_simple_prompt(
+            snippets=snippets,
             user_prompt=user_prompt
         )
 
@@ -182,7 +194,11 @@ class RAGSystem:
 
         response = ollama.generate(
             model=config.task.llm,
-            prompt=prompt
+            prompt=prompt,
+            options={
+                "max_tokens": config.task.max_tokens,
+                "temperature": config.task.temperature,
+            }
         )
 
         response = response['response']
@@ -200,11 +216,11 @@ class RAGSystem:
 
         if config.task.rerank:
             logger.info('Re-ranking Snippets')
-            retrieval_results = self._re_rank_cross_encoders(
+            retrieval_results = self._re_rank(
                 user_prompt,
                 retrieval_results,
             )
 
-        response = self._query_llm(user_prompt, retrieval_results)
+        response = self._final_query(user_prompt, retrieval_results)
 
         return response

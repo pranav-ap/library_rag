@@ -5,8 +5,11 @@ task:
     embedding_model: nomic-embed-text
     llm: 'phi3.5'  # 'gemma2:9b' 'phi3.5'
 
-    chunk_size: 512  # 1024 512 256
-    n_results: 16  # 8 16
+    chunk_size: 1024  # 1024 512 256
+    n_results: 8  # 8 16
+
+    temperature: 0.1
+    max_tokens: 200
 
     rewrite_user_prompt: False # True False
     rerank: True
