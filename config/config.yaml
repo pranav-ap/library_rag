@@ -3,13 +3,15 @@ log_level: TRACE  # TRACE WARNING
 task:
     debug_mode: True  # True False
     embedding_model: nomic-embed-text
-    llm: 'gemma2:9b'  # 'gemma2:9b' phi3
+    llm: 'phi3.5'  # 'gemma2:9b' 'phi3.5'
 
-    chunk_size: 256  # 1024 512 256
-    n_vector_results: 16  # 8 16
+    chunk_size: 512  # 1024 512 256
+    n_results: 16  # 8 16
 
     rewrite_user_prompt: False # True False
     rerank: True
+
+    collection_name: books
 
 paths:
     roots:
@@ -24,7 +26,7 @@ paths:
     storage: ${paths.roots.project}/storage
 
 llm:
-    phi3:
-        context_window_size: 8192
+    'phi3.5':
+        context_window_size: 128000
     'gemma2:9b':
         context_window_size: 8192

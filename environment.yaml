@@ -31,3 +31,5 @@ dependencies:
         - llama-index-llms-ollama
         - chromadb
         - sentence-transformers
+        - rank-bm25
+        -
