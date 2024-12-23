@@ -6,7 +6,7 @@ from utils import logger
 class PromptTemplate:
     def __init__(self, preamble: str, preferences: [str]):
         self.preamble = preamble
-        self.preferences = '\n - '.join(preferences) if len(preferences) > 0 else ''
+        self.preferences = '\n '.join(preferences) if len(preferences) > 0 else ''
 
     @staticmethod
     def prepare_context(snippets: List[str], empty_space: int) -> str:

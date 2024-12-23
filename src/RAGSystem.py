@@ -35,6 +35,10 @@ class RAGSystem:
             user_prompt=user_prompt
         )
 
+        if config.task.debug_mode:
+            logger.info('Original Prompt')
+            print(prompt)
+
         response = ollama.generate(
             model=config.task.llm,
             prompt=prompt,
