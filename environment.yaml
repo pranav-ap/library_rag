@@ -32,4 +32,4 @@ dependencies:
         - chromadb
         - sentence-transformers
         - rank-bm25
-        -
+        - deepeval

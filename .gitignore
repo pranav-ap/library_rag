@@ -4,6 +4,8 @@ data/
 nohup.out
 kaggle.json
 storage/
+.deepeval*
+./temp_test_run_data.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

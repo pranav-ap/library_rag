@@ -36,7 +36,7 @@ class RAGSystem:
         )
 
         if config.task.debug_mode:
-            logger.info('Original Prompt')
+            logger.debug('Original Prompt')
             print(prompt)
 
         response = ollama.generate(
@@ -51,7 +51,7 @@ class RAGSystem:
         response = response['response']
 
         if config.task.debug_mode:
-            logger.info('Rewritten User Prompt')
+            logger.debug('Rewritten User Prompt')
             print(response)
 
         return response
@@ -70,7 +70,7 @@ class RAGSystem:
             "distances": results["distances"][0]
         }
 
-        logger.info(f'Chroma Result Count : {len(results['ids'])}')
+        logger.debug(f'Chroma Result Count : {len(results['ids'])}')
 
         return results
 
@@ -97,7 +97,7 @@ class RAGSystem:
             "scores": [scores[i] for i in top_indices]
         }
 
-        logger.info(f'BM25 Result Count : {len(results['ids'])}')
+        logger.debug(f'BM25 Result Count : {len(results['ids'])}')
 
         return results
 
@@ -141,7 +141,7 @@ class RAGSystem:
             "snippets": [snippets[id_] for id_ in sorted_ids],
         }
 
-        logger.info(f'Hybrid Result Count : {len(combined_results["ids"])}')
+        logger.debug(f'Hybrid Result Count : {len(combined_results["ids"])}')
 
         return combined_results
 
@@ -194,7 +194,7 @@ class RAGSystem:
 
         if config.task.debug_mode:
             print(prompt)
-            logger.info(f'Prompt Length : {len(prompt)}')
+            logger.debug(f'Prompt Length : {len(prompt)}')
 
         response = ollama.generate(
             model=config.task.llm,
@@ -219,7 +219,7 @@ class RAGSystem:
         retrieval_results = self._combine_results(chroma_results, bm25_results)
 
         if config.task.rerank:
-            logger.info('Re-ranking Snippets')
+            logger.debug('Re-ranking Snippets')
             retrieval_results = self._re_rank(
                 user_prompt,
                 retrieval_results,
@@ -228,3 +228,23 @@ class RAGSystem:
         response = self._final_query(user_prompt, retrieval_results)
 
         return response
+
+    def query_test(self, user_prompt):
+        if config.task.rewrite_user_prompt:
+            user_prompt = self._rewrite_query(user_prompt)
+
+        chroma_results = self._get_chroma_results(user_prompt)
+        bm25_results = self._get_bm25_results(user_prompt)
+
+        retrieval_results = self._combine_results(chroma_results, bm25_results)
+
+        if config.task.rerank:
+            logger.debug('Re-ranking Snippets')
+            retrieval_results = self._re_rank(
+                user_prompt,
+                retrieval_results,
+            )
+
+        response = self._final_query(user_prompt, retrieval_results)
+
+        return response, retrieval_results

@@ -1,7 +1,7 @@
 log_level: TRACE  # TRACE WARNING
 
 task:
-    debug_mode: True  # True False
+    debug_mode: False  # True False
     embedding_model: nomic-embed-text
     llm: 'phi3.5'  # 'gemma2:9b' 'phi3.5'
 
@@ -9,7 +9,7 @@ task:
     n_results: 8  # 8 16
 
     temperature: 0.1
-    max_tokens: 200
+    max_tokens: 250
 
     rewrite_user_prompt: False # True False
     rerank: True
