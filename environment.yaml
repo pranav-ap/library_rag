@@ -22,6 +22,7 @@ dependencies:
     - diffusers
     - neptune
     - ollama
+    - litellm
     - pip:
         - albumentations
         - opencv-python
@@ -33,3 +34,5 @@ dependencies:
         - sentence-transformers
         - rank-bm25
         - deepeval
+        - smolagents
+        - gradio
