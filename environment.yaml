@@ -36,3 +36,6 @@ dependencies:
         - deepeval
         - smolagents
         - gradio
+        - langchain
+        - langchain-community
+        - datasets
