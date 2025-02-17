@@ -53,12 +53,13 @@ Modify `config.py` to adjust parameters such as:
 First set a local model as evaluation model.
 
 ```commandline
-deepeval set-local-model --model-name=gemma2:9b --base-url="http://localhost:11434/v1/"
+deepeval set-ollama deepseek-r1:8b
 ```
+The `set DEEPEVAL_RESULTS_FOLDER=.\test_results`
 
 Then run evaluate.
 
 ```commandline
-python .\evaluate.py
+deepeval test run .\tests\test_example.py
 ```
 
