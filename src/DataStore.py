@@ -26,12 +26,12 @@ def bm25_tokenizer(text):
 
 class DataStore:
     def __init__(self, persistent=True, reset=False):
+        if persistent:
+            logger.info("Using persistent storage")
+
         if reset:
             logger.info("Resetting storage directory")
             make_clear_directory(config.paths.storage)
-
-        if persistent:
-            logger.info("Using persistent storage")
 
         self.chroma_client = chromadb.PersistentClient(path=config.paths.storage) if persistent else chromadb.EphemeralClient()
 
@@ -43,29 +43,36 @@ class DataStore:
         from utils import list_files_in_folder
         paths = list_files_in_folder(config.paths.roots.data)
 
-        from llama_index.core import Document
-        documents: [Document] = []
+        logger.info('Reading Documents')
 
-        for file_path in paths:
-            with open(file_path, "r", encoding="utf-8") as file:
-                text = file.read()
+        from llama_index.core import SimpleDirectoryReader
+        documents = SimpleDirectoryReader(
+            input_dir=config.paths.roots.data,
+        ).load_data()
 
-            text = re.sub('\r', ' ', text)
-            text = re.sub('\\s+', ' ', text)
-            text = text.strip()
-
-            file_name = os.path.basename(file_path)
-            doc = Document(
-                doc_id=file_name,
-                text=text,
-                extra_info={
-                    'file_path': file_path,
-                    'file_name': file_name,
-                    'file_type': 'text/plain',
-                }
-            )
-
-            documents.append(doc)
+        # from llama_index.core import Document
+        # documents: [Document] = []
+        #
+        # for file_path in paths:
+        #     with open(file_path, "r", encoding="utf-8") as file:
+        #         text = file.read()
+        #
+        #     text = re.sub('\r', ' ', text)
+        #     text = re.sub('\\s+', ' ', text)
+        #     text = text.strip()
+        #
+        #     file_name = os.path.basename(file_path)
+        #     doc = Document(
+        #         doc_id=file_name,
+        #         text=text,
+        #         extra_info={
+        #             'file_path': file_path,
+        #             'file_name': file_name,
+        #             'file_type': 'text/plain',
+        #         }
+        #     )
+        #
+        #     documents.append(doc)
 
         return documents
 
@@ -74,6 +81,8 @@ class DataStore:
 
         from llama_index.core.ingestion import IngestionPipeline
         from llama_index.core.node_parser import SentenceSplitter
+
+        logger.info('Ingesting Documents')
 
         pipeline = IngestionPipeline(transformations=[
                 SentenceSplitter(
@@ -88,6 +97,8 @@ class DataStore:
 
     def _setup_chromadb(self):
         nodes = self._get_snippet_nodes()
+
+        logger.info('Setup ChromaDB')
 
         collection = self.chroma_client.get_or_create_collection(
             name=config.task.collection_name,
@@ -118,6 +129,8 @@ class DataStore:
 
     @staticmethod
     def _setup_bm25(collection):
+        logger.info('Setup BM25')
+
         result = collection.get()
 
         ids = result['ids']
@@ -160,6 +173,9 @@ class DataStore:
     def populate(self):
         chroma_collection = self._setup_chromadb()
         bm25_collection = self._setup_bm25(chroma_collection)
+
+        logger.info("Done!")
+
         return chroma_collection, bm25_collection
 
     def load(self):

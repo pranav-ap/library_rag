@@ -1,2 +1,2 @@
-from .RAGSystem import RAGSystem
+from .RAGAgent import RAGAgent
 from .DataStore import DataStore
