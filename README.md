@@ -1,29 +1,52 @@
 # Retrieval-Augmented Generation
 
+This is a retrieval-augmented generation (RAG) system that enhances language model responses by retrieving relevant information from a local knowledge base. It integrates BM25-based keyword search, semantic search using ChromaDB, and reranking with a cross-encoder to provide accurate and contextually relevant answers.
+
 ## Overview
 
 This RAG system consists of the following components,
 
-1. Query Reformulation 
-   - Optionally, using an LLM we can refine user prompts to optimize retrieval quality without altering intent.
-2. ChromaDB Vector Search  
-   - Retrieves semantically similar documents from a Chroma collection
-3. BM25 Lexical Search 
-   - Extracts keyword-based matches using BM25 scoring
-4. Hybrid Results Fusion
-   - Combines Chroma and BM25 results using Reciprocal Rank Fusion (RRF)
-5. Re-ranking
-   - A pre-trained CrossEncoder model is used to re-rank these results
+- **ChromaDB Vector Search** : Retrieves semantically similar documents from a Chroma collection
+- **BM25 Lexical Search** : Extracts keyword-based matches using BM25 scoring
+- **Hybrid Retrieval**: Merges search results from Chroma and BM25 using Reciprocal Rank Fusion (RRF).
+- **Cross-Encoder Reranking**: Utilizes a transformer-based cross-encoder model `ms-marco-MiniLM-L-6-v2` to refine retrieved results.
+- **Integration with SmolAgents**: Uses `smolagents` to facilitate interaction with the retrieval system.
+- **Gradio Web Interface**: A simple UI for querying the system.
 
-Finally, we put together the user's preferences and question to generate responses. A `Phi 3.5`
-model is used for response generation via Ollama. 
+By default, the `Qwen 2.5` model is used for response generation via Ollama. 
 
+
+## Usage
+
+### Running 
+
+To launch a web-based UI for querying the agent:
+
+```sh
+python main.py
+```
+
+- This will start a Gradio interface where you can enter queries.
+- Open the generated Gradio UI URL in your browser
+- Enter your query and get relevant retrieved snippets
+
+### Code Example 
 
 ```python
-rag = RAGSystem()
-response = rag.query("What is the capital of France?")
+from RAGAgent import RAGAgent
+
+agent = RAGAgent()
+response = agent.query("What is retrieval-augmented generation?")
 print(response)
 ```
+
+## Configuration
+
+Modify `config.py` to adjust parameters such as:
+
+- `n_results`: Number of retrieved documents
+- `chunk_size`: Size of chunks taken from documents for indexing
+
 
 ## Evaluation
 
@@ -38,3 +61,4 @@ Then run evaluate.
 ```commandline
 python .\evaluate.py
 ```
+
