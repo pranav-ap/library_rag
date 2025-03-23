@@ -38,4 +38,7 @@ dependencies:
         - gradio
         - langchain
         - langchain-community
+        - langchain-ollama
         - datasets
+        - bitsandbytes
+        - docarray

@@ -49,4 +49,5 @@ def ui_main():
 
 if __name__ == "__main__":
     setup_tracing()
+    # text_main()
     ui_main()
