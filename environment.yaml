@@ -36,9 +36,17 @@ dependencies:
         - deepeval
         - smolagents
         - gradio
+        - tiktoken
         - langchain
         - langchain-community
         - langchain-ollama
+        - langchain-nomic
+        - langchain-chroma
+        - nomic[local]
+        - langgraph
         - datasets
         - bitsandbytes
         - docarray
+        - tavily-python
+        - bs4
+

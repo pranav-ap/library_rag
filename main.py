@@ -1,53 +1,24 @@
-from utils import logger
+def main():
+    from src import setup_env_variables
+    setup_env_variables()
 
-from phoenix.otel import register
-from openinference.instrumentation.smolagents import SmolagentsInstrumentor
+    from src import setup_workflow
+    workflow = setup_workflow()
+    graph = workflow.compile()
 
-import gradio as gr
-from src import RAGAgent
+    inputs = {
+        "question": "When did Napoleon born?",
+        "max_retries": 3,
+        "MAX_ANSWER_LENGTH": 150,
+    }
 
+    results = []
+    for event in graph.stream(inputs, stream_mode="values"):
+        results.append(event)
 
-def setup_tracing():
-    # Go to http://localhost:6006/
-    tracer_provider = register(
-      project_name="library-rag-app",
-      endpoint="http://localhost:4317",
-    )
-
-    SmolagentsInstrumentor().instrument(tracer_provider=tracer_provider)
-
-
-def text_main():
-    user_prompt = "Where does Sherlock Holmes live? Check local sources"
-    logger.info('User Prompt')
-    print(user_prompt)
-
-    agent = RAGAgent()
-    response = agent.query(user_prompt)
-
-    logger.info('Response')
-    print(response)
-
-
-def ui_main():
-    agent = RAGAgent()
-
-    def query_rag_agent(user_prompt):
-        response = agent.query(user_prompt)
-        return response
-
-    iface = gr.Interface(
-        fn=query_rag_agent,
-        inputs=gr.Textbox(lines=2, placeholder="Enter your query..."),
-        outputs=gr.Textbox(),
-        title="RAG",
-        description="This tool retrieves relevant snippets from a local knowledge base to answer your queries.",
-    )
-
-    iface.launch()
+    if len(results):
+        print(results[-1]['answer'])
 
 
 if __name__ == "__main__":
-    setup_tracing()
-    # text_main()
-    ui_main()
+    main()
