@@ -55,7 +55,9 @@ def hybrid_retriever(query, vector_retriever, bm25_retriever):
 
 
 def main():
-    urls = ["https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/"]
+    urls = ["https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
+            "https://www.anthropic.com/engineering/building-effective-agents"]
+
     file_paths = []
 
     docs = load_documents(urls, file_paths)

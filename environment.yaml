@@ -49,4 +49,4 @@ dependencies:
         - docarray
         - tavily-python
         - bs4
-
+        - langfuse

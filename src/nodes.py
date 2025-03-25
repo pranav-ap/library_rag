@@ -33,14 +33,16 @@ def reformulate_query(state, llm_json_mode):
     ])
 
     new_question = json.loads(result.content)['new_question']
-    print(f"Reformulated question: {new_question}")
+    print(f"Reformulated question : {new_question}")
 
     return {"original_question": question, "question": new_question}
 
 
 def retrieve_documents(state: State, retriever):
     question = state["question"]
-    documents = retriever.invoke(question)
+    documents = retriever(question)
+
+    print(f"Retrieved {len(documents)} documents.")
 
     return {"documents": documents}
 
@@ -116,7 +118,7 @@ def generate_answer(state: State, llm):
     prompt_formatted = prompt.format(
         context=context,
         question=question,
-        MAX_ANSWER_LENGTH=MAX_ANSWER_LENGTH
+        MAX_ANSWER_LENGTH=MAX_ANSWER_LENGTH,
     )
 
     result: AIMessage = llm.invoke([
@@ -124,3 +126,4 @@ def generate_answer(state: State, llm):
     ])
 
     return {"answer": result.content, "loop_step": loop_step + 1}
+

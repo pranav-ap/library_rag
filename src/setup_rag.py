@@ -24,6 +24,10 @@ def setup_env_variables():
     os.environ["TOKENIZERS_PARALLELISM"] = "true"
     os.environ["USER_AGENT"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
 
+    os.environ["LANGFUSE_PUBLIC_KEY"] = "pk-lf-38f44a84-ed8a-4998-9ce7-f1847ea68f9a"
+    os.environ["LANGFUSE_SECRET_KEY"] = "sk-lf-eb310539-6db0-4a7a-b4d5-66442841ded5"
+    os.environ["LANGFUSE_HOST"] = "https://cloud.langfuse.com"
+
 
 def setup_llm():
     from langchain_ollama import ChatOllama
@@ -36,7 +40,7 @@ def setup_llm():
 
 def setup_web_search_tool():
     from langchain_community.tools import TavilySearchResults
-    web_search_tool = TavilySearchResults()
+    web_search_tool = TavilySearchResults(max_results=3)
     return web_search_tool
 
 
@@ -47,9 +51,8 @@ def setup_retriever():
     from langchain_ollama import OllamaEmbeddings
     from langchain_community.retrievers import BM25Retriever
 
-    urls = [
-        "https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
-    ]
+    urls = ["https://lilianweng.github.io/posts/2023-03-15-prompt-engineering/",
+            "https://www.anthropic.com/engineering/building-effective-agents"]
 
     docs = [WebBaseLoader(url).load() for url in urls]
     docs_list = [item for sublist in docs for item in sublist]
@@ -74,8 +77,8 @@ def setup_retriever():
     bm25_retriever.k = 3
 
     def hybrid_retriever(query):
-        bm25_results = bm25_retriever.get_relevant_documents(query)
-        vector_results = vector_retriever.get_relevant_documents(query)
+        bm25_results = bm25_retriever.invoke(query)
+        vector_results = vector_retriever.invoke(query)
         return bm25_results + vector_results
 
     return hybrid_retriever

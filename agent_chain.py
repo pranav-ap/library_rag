@@ -24,8 +24,8 @@ name2tool = {tool.name: tool.func for tool in tools}
 
 class RAGAgentExecutor:
     def __init__(self, max_iterations: int = 3):
-        model_name = "qwen2.5:7b"
-        llm = ChatOllama(temperature=0.0, model=model_name)
+        local_llm = "llama3.2:3b-instruct-fp16"
+        llm = ChatOllama(temperature=0.0, model=local_llm)
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", (
