@@ -1,10 +1,12 @@
 import json
 from langchain.schema import HumanMessage, SystemMessage, AIMessage
 from .state import State
-from .doc_utils import langchain_docs_to_string
+from .doc_utils import langchain_docs_to_single_string
 
 
 def route_question(state: State, llm_json_mode):
+    print('Routing question...')
+
     instructions = """
     You are an expert at routing a user question to a vectorstore or web search.
     The vectorstore contains documents related to agents, prompt engineering, and adversarial attacks.
@@ -20,6 +22,8 @@ def route_question(state: State, llm_json_mode):
     ])
 
     source = json.loads(route_question.content)["datasource"]
+
+    print(f"Routing question to {source}...")
 
     if source == "web_search":
         return "web_search"
@@ -65,7 +69,7 @@ def _check_relevance_of_answer_to_facts(llm_json_mode, documents, answer):
     """
 
     prompt_formatted = prompt.format(
-        documents=langchain_docs_to_string(documents),
+        documents=langchain_docs_to_single_string(documents),
         answer=answer
     )
 

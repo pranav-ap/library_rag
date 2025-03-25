@@ -1,19 +1,11 @@
-from langfuse.callback import CallbackHandler
-langfuse_handler = CallbackHandler()
-
-
 def main():
-    from src import setup_env_variables
-    setup_env_variables()
-
-    from src import setup_workflow
-    workflow = setup_workflow()
-    graph = workflow.compile()
+    from src import make_rag
+    rag, langfuse_handler = make_rag()
 
     print("RAG is ready. Type 'q' to quit.")
 
     while True:
-        question = input("\nAsk a question: ")
+        question = input("\nUser : ")
         if question.lower() in ["q", "exit"]:
             print("Goodbye!")
             break
@@ -25,11 +17,11 @@ def main():
         }
 
         results = []
-        for event in graph.stream(inputs, config={"callbacks": [langfuse_handler]}):
+        for event in rag.graph.stream(inputs, config={"callbacks": [langfuse_handler]}):
             results.append(event)
 
         if results:
-            print("\nAnswer:", results[-1]['answer'])
+            print("\nAI :", results[-1]['generate_answer']['answer'])
 
 
 if __name__ == "__main__":

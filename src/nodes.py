@@ -1,18 +1,21 @@
 import json
 from langchain.schema import Document, HumanMessage, SystemMessage, AIMessage
 from .state import State
-from .doc_utils import langchain_docs_to_string
+from .doc_utils import langchain_docs_to_single_string
 
 
 def reformulate_query(state, llm_json_mode):
+    print('Reformulating question...')
+
     question = state["question"]
 
     system_prompt = """
     "You are an expert in information retrieval. 
     Your task is to improve user queries for better document retrieval. 
-    You will rewrite the given query to make it more specific, informative, and 
-    clear while preserving its original intent. Expand abbreviations, clarify ambiguity, 
-    and add context if necessary. If the query is already optimal, return it unchanged.
+    You will rewrite the given query to make it more clear while preserving its original intent. 
+    Expand abbreviations, clarify ambiguity, and add context if necessary. 
+    If the question is generic, do not add details. 
+    If the query is already optimal, return it unchanged.
     """
 
     user_prompt = """
@@ -34,13 +37,17 @@ def reformulate_query(state, llm_json_mode):
 
     new_question = json.loads(result.content)['new_question']
     print(f"Reformulated question : {new_question}")
+    explanation = json.loads(result.content)['explanation']
+    print(f"Explanation : {explanation}")
 
     return {"original_question": question, "question": new_question}
 
 
 def retrieve_documents(state: State, retriever):
+    print('Retrieving documents...')
+
     question = state["question"]
-    documents = retriever(question)
+    documents = retriever.fusion_retrieval(query=question)
 
     print(f"Retrieved {len(documents)} documents.")
 
@@ -48,6 +55,8 @@ def retrieve_documents(state: State, retriever):
 
 
 def filter_relevant_documents(state: State, llm_json_mode):
+    print('Filtering relevant documents...')
+
     question: str = state["question"]
     documents: [Document] = state["documents"]
 
@@ -84,6 +93,8 @@ def filter_relevant_documents(state: State, llm_json_mode):
 
 
 def web_search(state: State, web_search_tool):
+    print('Searching the web...')
+
     question = state["question"]
     documents = state.get("documents", [])
 
@@ -97,6 +108,8 @@ def web_search(state: State, web_search_tool):
 
 
 def generate_answer(state: State, llm):
+    print('Generating answer...')
+
     question = state["question"]
     documents = state["documents"]
     loop_step = state.get("loop_step", 0)
@@ -114,7 +127,7 @@ def generate_answer(state: State, llm):
     Answer:
     """
 
-    context = langchain_docs_to_string(documents)
+    context = langchain_docs_to_single_string(documents)
     prompt_formatted = prompt.format(
         context=context,
         question=question,
