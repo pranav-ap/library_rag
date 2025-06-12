@@ -10,32 +10,31 @@ dependencies:
     - matplotlib
     - pillow
     - seaborn
-    - scikit-learn
-    - scikit-image
-    - loguru
-    - tqdm
-    - hydra-core
-    - jupyterlab
     - jupyter
-    - h5py
+    - sqlalchemy
     - lightning
-    - diffusers
-    - neptune
-    - ollama
-    - litellm
+    - loguru
+    - hydra-core
     - pip:
-        - albumentations
         - opencv-python
-        - tensorboard
-        - llama-index
-        - llama-index-embeddings-ollama
-        - llama-index-llms-ollama
-        - chromadb
+        - requests
+        - aiohttp
+        - fastapi
+        - uvicorn[standard]
+        - pytest
+        - llama-cpp-python
+        - datasets
+        - diffusers
+        - transformers
         - sentence-transformers
-        - rank-bm25
-        - deepeval
-        - smolagents
-        - gradio
+        - evaluate
+        - rouge_score
+        - tensorboard
+        - scikit-learn
+        - accelerate
+        - bitsandbytes
+        - hf_xet
+        - peft
         - tiktoken
         - langchain
         - langchain-community
@@ -44,9 +43,7 @@ dependencies:
         - langchain-chroma
         - nomic[local]
         - langgraph
-        - datasets
-        - bitsandbytes
-        - docarray
-        - tavily-python
-        - bs4
         - langfuse
+        - tavily-python
+        - ollama
+        - pypdf

@@ -1,65 +1,36 @@
 # Retrieval-Augmented Generation
 
-This is a retrieval-augmented generation (RAG) system that enhances language model responses by retrieving relevant information from a local knowledge base. It integrates BM25-based keyword search, semantic search using ChromaDB, and reranking with a cross-encoder to provide accurate and contextually relevant answers.
+This project implements a Retrieval-Augmented Generation (RAG) workflow that uses,
 
-## Overview
-
-This RAG system consists of the following components,
-
-- **ChromaDB Vector Search** : Retrieves semantically similar documents from a Chroma collection
-- **BM25 Lexical Search** : Extracts keyword-based matches using BM25 scoring
-- **Hybrid Retrieval**: Merges search results from Chroma and BM25 using Reciprocal Rank Fusion (RRF).
-- **Cross-Encoder Reranking**: Utilizes a transformer-based cross-encoder model `ms-marco-MiniLM-L-6-v2` to refine retrieved results.
-- **Integration with SmolAgents**: Uses `smolagents` to facilitate interaction with the retrieval system.
-- **Gradio Web Interface**: A simple UI for querying the system.
-
-By default, the `Qwen 2.5` model is used for response generation via Ollama. 
+* 🕸️ Web search via **Tavily**
+* 📚 Document retrieval via **vector database**
+* 💬 Local LLMs via **Ollama**
+* 🔀 Dynamic reasoning and control flow using **LangGraph**
+* 📊 Tracing and evaluation using **Langfuse**
 
 
-## Usage
+## 🚀 Features
 
-### Running 
+* Hybrid RAG with both web and vector-based retrieval
+* Automatic query reformulation
+* Relevance filtering before answer generation
+* Hallucination detection and correction
+* Tracing via Langfuse
+* Modular node/edge logic using LangGraph
 
-To launch a web-based UI for querying the agent:
+This RAG system is built with a hybrid retrieval architecture combining multiple search strategies:
 
-```sh
-python main.py
+* **ChromaDB Vector Search**: Retrieves documents based on semantic similarity using dense embeddings from a Chroma collection.
+* **BM25 Lexical Search**: Identifies relevant documents using traditional keyword-based matching with BM25 scoring.
+* **Hybrid Retrieval**: Integrates results from both semantic and lexical searches using **Reciprocal Rank Fusion (RRF)** for balanced and robust retrieval.
+
+
+## 🔐 Environment Variables
+
+Create a `.env` file in the project root:
+
+```dotenv
+TAVILY_API_KEY=your_tavily_api_key
+LANGFUSE_PUBLIC_KEY=your_langfuse_public_key
+LANGFUSE_SECRET_KEY=your_langfuse_secret_key
 ```
-
-- This will start a Gradio interface where you can enter queries.
-- Open the generated Gradio UI URL in your browser
-- Enter your query and get relevant retrieved snippets
-
-### Code Example 
-
-```python
-from RAGAgent import RAGAgent
-
-agent = RAGAgent()
-response = agent.query("What is retrieval-augmented generation?")
-print(response)
-```
-
-## Configuration
-
-Modify `config.py` to adjust parameters such as:
-
-- `n_results`: Number of retrieved documents
-- `chunk_size`: Size of chunks taken from documents for indexing
-
-
-## Evaluation
-
-First set a local model as evaluation model.
-
-```commandline
-deepeval set-ollama deepseek-r1:8b
-```
-The `set DEEPEVAL_RESULTS_FOLDER=.\test_results`
-
-Then run evaluate.
-
-```commandline
-deepeval test run .\tests\test_example.py
-```
-

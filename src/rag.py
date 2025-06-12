@@ -1,7 +1,7 @@
 from utils import logger
 import os
 from langgraph.graph import StateGraph, START, END
-from langfuse.callback import CallbackHandler
+from langfuse.langchain import CallbackHandler
 
 from .state import State
 
@@ -91,7 +91,10 @@ class RAG:
             lambda state: generate_answer(state, self.llm)
         )
 
-        workflow.add_edge("retrieve_documents", "filter_relevant_documents")
+        workflow.add_edge(
+            "retrieve_documents",
+            "filter_relevant_documents"
+        )
 
         workflow.add_conditional_edges(
             "filter_relevant_documents",
@@ -102,7 +105,10 @@ class RAG:
             },
         )
 
-        workflow.add_edge("web_search", "generate_answer")
+        workflow.add_edge(
+            "web_search",
+            "generate_answer"
+        )
 
         workflow.add_conditional_edges(
             "generate_answer",
@@ -119,12 +125,12 @@ class RAG:
 
 
 def setup_env_variables():
-    os.environ["TAVILY_API_KEY"] = "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"
+    from dotenv import load_dotenv
+    load_dotenv()
+
     os.environ["TOKENIZERS_PARALLELISM"] = "true"
     os.environ["USER_AGENT"] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-
-    os.environ["LANGFUSE_PUBLIC_KEY"] = "pk-lf-38f44a84-ed8a-4998-9ce7-f1847ea68f9a"
-    os.environ["LANGFUSE_SECRET_KEY"] = "sk-lf-eb310539-6db0-4a7a-b4d5-66442841ded5"
+    os.environ["TOKENIZERS_PARALLELISM"] = "true"
     os.environ["LANGFUSE_HOST"] = "https://cloud.langfuse.com"
 
 

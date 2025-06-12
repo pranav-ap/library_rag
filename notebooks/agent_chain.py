@@ -1,8 +1,7 @@
 import json
 from langchain_ollama import ChatOllama, OllamaEmbeddings, OllamaLLM
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import ToolMessage
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage
+from langchain_core.messages import ToolMessage, BaseMessage, HumanMessage, AIMessage
 from langchain_core.runnables.base import RunnableSerializable
 from langchain_core.tools import tool
 

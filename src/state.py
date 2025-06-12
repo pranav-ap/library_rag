@@ -1,4 +1,3 @@
-import operator
 from typing_extensions import TypedDict
 from typing import List, Annotated
 from langchain.schema import Document

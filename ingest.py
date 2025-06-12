@@ -9,12 +9,12 @@ def main():
         "D:/code/library_rag/data/The King.pdf",
     ]
 
-    print(f'indexing {len(paths)} documents...')
+    print(f'Indexing {len(paths)} documents...')
 
     indexer = DocumentIndexer()
     indexer.index_documents(paths)
 
-    print('done!')
+    print('Done!')
 
 
 if __name__ == "__main__":

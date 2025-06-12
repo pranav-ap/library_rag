@@ -64,7 +64,6 @@ class DocumentIndexer:
         return text_splitter.split_documents(documents)
 
     def index_documents(self, file_paths: List[str]):
-        # clear directory
         if os.path.exists(CHROMA_DB_PATH):
             shutil.rmtree(CHROMA_DB_PATH)
 
